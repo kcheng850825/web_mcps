@@ -34,7 +34,7 @@ echo [Step 2/6] Checking Claude Code...
 where claude >nul 2>&1
 if errorlevel 1 (
     echo   Not found. Installing Claude Code...
-    npm install -g @anthropic-ai/claude-code
+    call npm install -g @anthropic-ai/claude-code
     where claude >nul 2>&1
     if errorlevel 1 (
         echo   ERROR: Failed to install Claude Code.
@@ -44,7 +44,7 @@ if errorlevel 1 (
     )
     echo   Installed. Now log in:
     echo.
-    claude auth login
+    call claude auth login
 )
 where claude >nul 2>&1
 if not errorlevel 1 (
@@ -106,7 +106,7 @@ if "!FC_KEY!"=="" (
     set TIER=1
     goto :skip_firecrawl
 )
-claude mcp add firecrawl -e FIRECRAWL_API_KEY=!FC_KEY! -- npx -y firecrawl-mcp
+call claude mcp add firecrawl -e FIRECRAWL_API_KEY=!FC_KEY! -- npx -y firecrawl-mcp
 echo   Firecrawl Cloud - OK
 goto :skip_firecrawl
 
@@ -126,7 +126,7 @@ echo   Docker found. Starting Firecrawl container...
 docker run -d --name firecrawl -p 3002:3002 ghcr.io/mendableai/firecrawl:latest >nul 2>&1
 if errorlevel 1 docker start firecrawl >nul 2>&1
 echo   Firecrawl running at http://localhost:3002
-claude mcp add firecrawl -e FIRECRAWL_API_KEY=fc-local -e FIRECRAWL_API_URL=http://localhost:3002 -- npx -y firecrawl-mcp
+call claude mcp add firecrawl -e FIRECRAWL_API_KEY=fc-local -e FIRECRAWL_API_URL=http://localhost:3002 -- npx -y firecrawl-mcp
 echo   Self-hosted Firecrawl - OK
 
 :skip_firecrawl
@@ -137,7 +137,7 @@ echo   Self-hosted Firecrawl - OK
 echo.
 echo [Step 5/6] Installing Playwright browsers...
 echo   This may take a few minutes (downloading ~500MB)...
-npx playwright install
+call npx playwright install
 echo   Playwright - OK
 
 :: -------------------------------------------
