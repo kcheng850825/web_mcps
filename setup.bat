@@ -34,7 +34,7 @@ echo [Step 2/6] Checking Claude Code...
 where claude >nul 2>&1
 if errorlevel 1 (
     echo   Not found. Installing Claude Code...
-    call npm install -g @anthropic-ai/claude-code
+    npm install -g @anthropic-ai/claude-code
     where claude >nul 2>&1
     if errorlevel 1 (
         echo   ERROR: Failed to install Claude Code.
@@ -44,15 +44,16 @@ if errorlevel 1 (
     )
     echo   Installed. Now log in:
     echo.
-    call claude auth login
-    goto :tier_select
+    claude auth login
 )
-for /f "tokens=*" %%v in ('claude --version 2^>nul') do echo   Found Claude Code %%v - OK
+where claude >nul 2>&1
+if not errorlevel 1 (
+    for /f "tokens=*" %%v in ('claude --version 2^>nul') do echo   Found Claude Code %%v - OK
+)
 
 :: -------------------------------------------
 :: Step 3: Choose your tier
 :: -------------------------------------------
-:tier_select
 echo.
 echo ============================================
 echo   Choose Your Setup Tier
@@ -80,22 +81,19 @@ echo Invalid choice. Defaulting to 1 (Free).
 set TIER=1
 
 :tier_ok
+
 :: -------------------------------------------
-:: Step 4: Install tools based on tier
+:: Step 4: Install Firecrawl (if tier 2 or 3)
 :: -------------------------------------------
+if "%TIER%"=="1" goto :skip_firecrawl
+
+if "%TIER%"=="2" goto :firecrawl_cloud
+if "%TIER%"=="3" goto :firecrawl_selfhost
+goto :skip_firecrawl
+
+:firecrawl_cloud
 echo.
-echo [Step 4/6] Installing tools for Tier %TIER%...
-
-:: Playwright is needed for all tiers
-echo   Installing Playwright browsers (this may take a few minutes)...
-call npx playwright install >nul 2>&1
-echo   Playwright - OK
-
-if "%TIER%"=="2" goto :tier2_setup
-if "%TIER%"=="3" goto :tier3_setup
-goto :install_skill
-
-:tier2_setup
+echo [Step 4/6] Setting up Firecrawl Cloud...
 echo.
 echo   Firecrawl Cloud requires an API key.
 echo   1. Go to https://www.firecrawl.dev
@@ -106,15 +104,15 @@ set /p FC_KEY="   Paste your Firecrawl API key: "
 if "!FC_KEY!"=="" (
     echo   No key entered. Skipping Firecrawl, falling back to Tier 1.
     set TIER=1
-    goto :install_skill
+    goto :skip_firecrawl
 )
-call claude mcp add firecrawl -e FIRECRAWL_API_KEY=!FC_KEY! -- npx -y firecrawl-mcp
+claude mcp add firecrawl -e FIRECRAWL_API_KEY=!FC_KEY! -- npx -y firecrawl-mcp
 echo   Firecrawl Cloud - OK
-goto :install_skill
+goto :skip_firecrawl
 
-:tier3_setup
+:firecrawl_selfhost
 echo.
-echo   Self-hosted Firecrawl requires Docker.
+echo [Step 4/6] Setting up Self-Hosted Firecrawl...
 where docker >nul 2>&1
 if errorlevel 1 (
     echo   Docker NOT FOUND. You need Docker to self-host Firecrawl.
@@ -122,53 +120,60 @@ if errorlevel 1 (
     echo   After installing Docker, run this script again and choose option 3.
     echo   Falling back to Tier 1 for now.
     set TIER=1
-    goto :install_skill
+    goto :skip_firecrawl
 )
-echo   Docker found. Setting up self-hosted Firecrawl...
-echo   Starting Firecrawl container...
+echo   Docker found. Starting Firecrawl container...
 docker run -d --name firecrawl -p 3002:3002 ghcr.io/mendableai/firecrawl:latest >nul 2>&1
-if errorlevel 1 (
-    echo   Container may already be running. Checking...
-    docker start firecrawl >nul 2>&1
-)
+if errorlevel 1 docker start firecrawl >nul 2>&1
 echo   Firecrawl running at http://localhost:3002
-call claude mcp add firecrawl -e FIRECRAWL_API_KEY=fc-local -e FIRECRAWL_API_URL=http://localhost:3002 -- npx -y firecrawl-mcp
+claude mcp add firecrawl -e FIRECRAWL_API_KEY=fc-local -e FIRECRAWL_API_URL=http://localhost:3002 -- npx -y firecrawl-mcp
 echo   Self-hosted Firecrawl - OK
-goto :install_skill
+
+:skip_firecrawl
 
 :: -------------------------------------------
-:: Step 5: Install the right skill file
+:: Step 5: Install Playwright
 :: -------------------------------------------
-:install_skill
 echo.
-echo [Step 5/6] Installing /web skill (Tier %TIER%)...
+echo [Step 5/6] Installing Playwright browsers...
+echo   This may take a few minutes (downloading ~500MB)...
+npx playwright install
+echo   Playwright - OK
+
+:: -------------------------------------------
+:: Step 6: Install the right skill file
+:: -------------------------------------------
+echo.
+echo [Step 6/6] Installing /web skill (Tier %TIER%)...
 
 :: Create directories
 mkdir "%USERPROFILE%\.claude\commands" 2>nul
+mkdir ".claude\commands" 2>nul
 
 :: Copy the right tier
 if "%TIER%"=="1" (
     copy /y ".claude\commands\tiers\web-free.md" "%USERPROFILE%\.claude\commands\web.md" >nul
+    copy /y ".claude\commands\tiers\web-free.md" ".claude\commands\web.md" >nul
     echo   Installed: FREE tier - WebFetch + Playwright
 )
 if "%TIER%"=="2" (
     copy /y ".claude\commands\tiers\web-firecrawl.md" "%USERPROFILE%\.claude\commands\web.md" >nul
+    copy /y ".claude\commands\tiers\web-firecrawl.md" ".claude\commands\web.md" >nul
     echo   Installed: FIRECRAWL CLOUD tier
 )
 if "%TIER%"=="3" (
     copy /y ".claude\commands\tiers\web-selfhost.md" "%USERPROFILE%\.claude\commands\web.md" >nul
+    copy /y ".claude\commands\tiers\web-selfhost.md" ".claude\commands\web.md" >nul
     echo   Installed: SELF-HOSTED FIRECRAWL tier
 )
 
-:: Also copy to project directory
-mkdir ".claude\commands" 2>nul
-copy /y "%USERPROFILE%\.claude\commands\web.md" ".claude\commands\web.md" >nul
-
 :: -------------------------------------------
-:: Step 6: Verify
+:: Done: Verify
 :: -------------------------------------------
 echo.
-echo [Step 6/6] Verifying setup...
+echo ============================================
+echo   Verifying setup...
+echo ============================================
 
 where claude >nul 2>&1
 if errorlevel 1 (echo   Claude Code - MISSING) else (echo   Claude Code - OK)
