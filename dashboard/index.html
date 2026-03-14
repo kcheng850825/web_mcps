@@ -197,7 +197,7 @@
 <body>
 
 <h1>Web Skill Benchmark Dashboard</h1>
-<p class="subtitle">Compare baseline (no skill) vs /web skill — efficiency scores, token usage, and quality</p>
+<p class="subtitle">Compare baseline (no skill) vs /web skill — efficiency scores, context usage, and quality</p>
 
 <div id="app">
   <div class="loader">
@@ -212,20 +212,27 @@
 
 <script>
 const SAMPLE_DATA = {
-  "meta": { "date": "2026-03-14", "runner": "sample", "notes": "Sample data for demo" },
+  "meta": { "date": "2026-03-14", "runner": "auto-benchmark", "mode": "subscription", "notes": "Sample data - subscription mode (context %)" },
   "runs": [
-    { "test_id":1, "test_name":"Python 3.12 docs", "category":"static", "baseline":{"tool_used":"WebFetch","completeness":3,"accuracy":3,"tokens_used":4200,"turns":1}, "skill":{"tool_used":"WebFetch","completeness":3,"accuracy":3,"tokens_used":4400,"turns":1} },
-    { "test_id":2, "test_name":"Rust blog post", "category":"static", "baseline":{"tool_used":"WebFetch","completeness":2,"accuracy":2,"tokens_used":5100,"turns":2}, "skill":{"tool_used":"WebFetch","completeness":3,"accuracy":3,"tokens_used":4800,"turns":1} },
-    { "test_id":3, "test_name":"Vercel pricing", "category":"js-heavy", "baseline":{"tool_used":"WebFetch","completeness":0,"accuracy":0,"tokens_used":8500,"turns":3}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":3,"tokens_used":3200,"turns":1} },
-    { "test_id":4, "test_name":"React useState docs", "category":"js-heavy", "baseline":{"tool_used":"WebFetch","completeness":1,"accuracy":1,"tokens_used":12000,"turns":3}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":3,"tokens_used":4100,"turns":1} },
-    { "test_id":7, "test_name":"HTTP libs comparison", "category":"discovery", "baseline":{"tool_used":"WebSearch","completeness":2,"accuracy":2,"tokens_used":9800,"turns":4}, "skill":{"tool_used":"Firecrawl search","completeness":3,"accuracy":3,"tokens_used":5200,"turns":2} },
-    { "test_id":10, "test_name":"Figma features", "category":"failure-case", "baseline":{"tool_used":"WebFetch","completeness":0,"accuracy":0,"tokens_used":6200,"turns":2}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":2,"tokens_used":3800,"turns":1} }
+    { "test_id":1, "test_name":"Python 3.12 docs", "category":"static", "baseline":{"tool_used":"WebFetch","completeness":3,"accuracy":3,"tokens_used":5,"turns":1,"notes":"context 12% to 17%"}, "skill":{"tool_used":"WebFetch","completeness":3,"accuracy":3,"tokens_used":4,"turns":1,"notes":"context 0% to 4%"} },
+    { "test_id":2, "test_name":"Rust blog post", "category":"static", "baseline":{"tool_used":"WebFetch","completeness":2,"accuracy":2,"tokens_used":7,"turns":2,"notes":"context 17% to 24%"}, "skill":{"tool_used":"WebFetch","completeness":3,"accuracy":3,"tokens_used":5,"turns":1,"notes":"context 4% to 9%"} },
+    { "test_id":3, "test_name":"Vercel pricing", "category":"js-heavy", "baseline":{"tool_used":"WebFetch","completeness":0,"accuracy":0,"tokens_used":12,"turns":3,"notes":"empty content, retried"}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":3,"tokens_used":4,"turns":1,"notes":"clean markdown"} },
+    { "test_id":4, "test_name":"React useState docs", "category":"js-heavy", "baseline":{"tool_used":"WebFetch","completeness":1,"accuracy":1,"tokens_used":15,"turns":3,"notes":"partial content"}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":3,"tokens_used":5,"turns":1,"notes":"full API ref"} },
+    { "test_id":5, "test_name":"GitHub trending", "category":"interactive", "baseline":{"tool_used":"WebFetch","completeness":1,"accuracy":1,"tokens_used":8,"turns":2,"notes":"got some repos"}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":3,"tokens_used":4,"turns":1,"notes":"full trending list"} },
+    { "test_id":6, "test_name":"Topic research", "category":"discovery", "baseline":{"tool_used":"WebSearch","completeness":2,"accuracy":2,"tokens_used":10,"turns":4,"notes":"multiple searches"}, "skill":{"tool_used":"Firecrawl search","completeness":3,"accuracy":3,"tokens_used":6,"turns":2,"notes":"found good comparison"} },
+    { "test_id":7, "test_name":"GitHub API limits", "category":"discovery", "baseline":{"tool_used":"WebSearch","completeness":2,"accuracy":3,"tokens_used":6,"turns":2,"notes":"found answer"}, "skill":{"tool_used":"WebSearch","completeness":3,"accuracy":3,"tokens_used":4,"turns":1,"notes":"direct answer"} },
+    { "test_id":8, "test_name":"Reddit front page", "category":"failure-case", "baseline":{"tool_used":"WebFetch","completeness":0,"accuracy":0,"tokens_used":4,"turns":1,"notes":"blocked"}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":2,"tokens_used":5,"turns":1,"notes":"got headlines"} },
+    { "test_id":9, "test_name":"Figma features", "category":"failure-case", "baseline":{"tool_used":"WebFetch","completeness":0,"accuracy":0,"tokens_used":8,"turns":2,"notes":"SPA empty"}, "skill":{"tool_used":"Firecrawl","completeness":3,"accuracy":2,"tokens_used":4,"turns":1,"notes":"feature list retrieved"} },
+    { "test_id":10, "test_name":"Cookie consent page", "category":"interactive", "baseline":{"tool_used":"WebFetch","completeness":1,"accuracy":1,"tokens_used":6,"turns":2,"notes":"blocked by overlay"}, "skill":{"tool_used":"Playwright","completeness":3,"accuracy":3,"tokens_used":7,"turns":1,"notes":"dismissed consent"} }
   ]
 };
 
 function calcScore(r) {
   if (!r || r.tokens_used === 0) return 0;
-  return (r.completeness * r.accuracy) / (r.tokens_used / 1000);
+  // Auto-detect: if value <= 100, treat as context % (divide directly)
+  // If value > 100, treat as token count (divide by 1000 first)
+  const cost = r.tokens_used > 100 ? r.tokens_used / 1000 : r.tokens_used;
+  return (r.completeness * r.accuracy) / cost;
 }
 
 function categoryBadge(cat) {
@@ -252,6 +259,15 @@ function pctChange(baseline, skill) {
 
 function render(data) {
   const runs = data.runs;
+  const mode = data.meta.mode || 'unknown';
+
+  // Auto-detect: if all tokens_used values are under 100, it's likely context %
+  const maxVal = Math.max(...runs.map(r => Math.max(r.baseline.tokens_used, r.skill.tokens_used)));
+  const isContextPct = maxVal <= 100;
+  const costLabel = isContextPct ? 'Context %' : 'Tokens';
+  const costUnit = isContextPct ? '%' : '';
+  const modeLabel = mode === 'subscription' ? 'Subscription (context %)' :
+                    mode === 'api' ? 'API (token count)' : 'Auto-detected: ' + (isContextPct ? 'context %' : 'tokens');
 
   // Aggregate stats
   let totalBaselineTokens = 0, totalSkillTokens = 0;
@@ -287,9 +303,9 @@ function render(data) {
         <div class="detail">Baseline: ${avgBaselineScore.toFixed(2)} (${scorePct > 0 ? '+' : ''}${scorePct}%)</div>
       </div>
       <div class="summary-card">
-        <div class="label">Token Savings</div>
+        <div class="label">${costLabel} Savings</div>
         <div class="value ${tokenSavingsPct > 0 ? 'positive' : 'negative'}">${tokenSavingsPct}%</div>
-        <div class="detail">${totalSkillTokens.toLocaleString()} vs ${totalBaselineTokens.toLocaleString()} baseline</div>
+        <div class="detail">${totalSkillTokens.toLocaleString()}${costUnit} vs ${totalBaselineTokens.toLocaleString()}${costUnit} baseline</div>
       </div>
       <div class="summary-card">
         <div class="label">Turns Saved</div>
@@ -303,9 +319,10 @@ function render(data) {
       </div>
     </div>
 
-    <!-- Token Usage Chart -->
+    <!-- Token/Context Usage Chart -->
     <div class="chart-section">
-      <h2>Token Usage: Baseline vs /web Skill</h2>
+      <h2>${costLabel} Usage: Baseline vs /web Skill</h2>
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:12px;">Mode: ${modeLabel}</div>
       <div class="legend">
         <span><span class="legend-dot" style="background:rgba(239,68,68,0.5)"></span>Baseline</span>
         <span><span class="legend-dot" style="background:rgba(34,197,94,0.6)"></span>/web Skill</span>
@@ -335,7 +352,7 @@ function render(data) {
             <th>Skill Tool</th>
             <th>Baseline Score</th>
             <th>Skill Score</th>
-            <th>Token Change</th>
+            <th>${costLabel} Change</th>
           </tr>
         </thead>
         <tbody id="detailTable"></tbody>

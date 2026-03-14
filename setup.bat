@@ -188,7 +188,11 @@ if errorlevel 1 (echo   Playwright - MISSING) else (echo   Playwright - OK)
 if "%TIER%"=="2" echo   Firecrawl Cloud - CONFIGURED
 if "%TIER%"=="3" echo   Firecrawl Self-Hosted - CONFIGURED
 
+:: Also install benchmark skill
+copy /y ".claude\commands\benchmark.md" "%USERPROFILE%\.claude\commands\benchmark.md" >nul
+
 echo   /web skill - INSTALLED
+echo   /benchmark skill - INSTALLED
 
 echo.
 echo ============================================
@@ -200,8 +204,8 @@ echo     claude
 echo   Then type:
 echo     /web Get the pricing from vercel.com
 echo.
-echo   To run benchmarks later:
-echo     benchmarks\run_benchmark.bat
+echo   To run automated benchmarks:
+echo     /benchmark  (inside Claude)
 echo.
 echo   To see the dashboard:
 echo     start dashboard\index.html
