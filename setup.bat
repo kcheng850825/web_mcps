@@ -137,6 +137,7 @@ echo   Self-hosted Firecrawl - OK
 echo.
 echo [Step 5/6] Installing Playwright browsers...
 echo   This may take a few minutes (downloading ~500MB)...
+call npm install @playwright/test >nul 2>&1
 call npx playwright install
 echo   Playwright - OK
 
