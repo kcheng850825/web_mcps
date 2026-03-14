@@ -1,95 +1,152 @@
-# /web — Adaptive Web Content Fetcher (Firecrawl Cloud)
+# /web — Power Web Skill (Firecrawl Cloud)
 
-You are a smart routing layer for web content retrieval. You use Firecrawl (cloud API) for JS-heavy sites and clean markdown extraction, with free built-in tools as the first choice.
+You are an advanced web research and extraction tool. You handle tasks that built-in WebFetch/WebSearch CANNOT do alone: multi-page crawls, structured extraction, cross-site comparison, and deep research.
 
 ## Input
 The user provides: `$ARGUMENTS`
 
 ## Step 1: Classify the Task
 
-| Signal | Classification | Primary Tool | Fallback |
-|--------|---------------|-------------|----------|
-| URL points to static docs, blog, wiki, plain HTML | **Static** | WebFetch | Firecrawl scrape → Playwright |
-| URL is a JS-heavy site (SPA, React, dashboard) | **JS-rendered** | WebFetch first, then Firecrawl | Playwright |
-| Need to click, log in, fill forms, scroll | **Interactive** | Playwright CLI | WebFetch |
-| No specific URL — searching for information | **Discovery** | WebSearch | Firecrawl search |
-| URL is blocked or previously failed | **Blocked** | Firecrawl scrape | Playwright → WebSearch for alt source |
+| Pattern | Mode | Tools Used |
+|---------|------|-----------|
+| "crawl", "ingest", "all pages from" | **Crawl** | Firecrawl `crawl` |
+| "compare", "vs", "versus", "differences between" | **Compare** | WebFetch/Firecrawl on multiple URLs |
+| "extract", "table", "list all", "endpoints", "specs" | **Extract** | Firecrawl `scrape` with structured output |
+| "research", "find sources", "deep dive", "report on" | **Research** | WebSearch → Firecrawl scrape on top results |
+| "monitor", "what changed", "diff" | **Monitor** | Firecrawl `scrape` + file diff |
+| Single URL, simple question | **Simple fetch** | WebFetch first (free), Firecrawl as fallback |
 
-**IMPORTANT CHANGE:** Always try WebFetch first, even for JS-heavy sites. Many modern sites (Vercel, React docs, GitHub) serve pre-rendered HTML that WebFetch handles fine. Only escalate if WebFetch returns empty/broken content.
+## Step 2: Execute by Mode
 
-## Step 2: Execute
+---
 
-### For ALL URLs — Start with WebFetch
-1. Try `WebFetch` first. It's free and fast.
-2. Check the result:
-   - **Got good content?** → Done. Output it.
-   - **Got empty page / script tags only / garbled HTML?** → Go to Firecrawl below.
-   - **Got an error or blocked?** → Go to Firecrawl below.
+### Mode: CRAWL — Ingest entire sites
+**When:** User wants to understand an entire doc site, API reference, or knowledge base.
 
-### If WebFetch Failed — Try Firecrawl
-1. Use Firecrawl MCP `scrape` tool with the URL.
-2. Check the result:
-   - **Got good content?** → Done. Output it. Note "1 credit used."
-   - **Got an error (auth error, timeout, invalid token)?** → **DO NOT STOP.** Go to Playwright below.
-   - **Got empty content?** → Go to Playwright below.
+**Sequence:**
+1. Use Firecrawl `crawl` with the base URL
+   - Set a reasonable page limit (10-50 pages depending on site)
+   - Request markdown format
+2. Organize the crawled content by section/topic
+3. Summarize the structure first, then provide details on what the user asked about
+4. Save the crawl output to a file if it's large (so it persists beyond context)
 
-### If Firecrawl Also Failed — Try Playwright
-1. Use Playwright via Bash:
-```bash
-npx playwright screenshot <url> page.png --full-page
+**Example triggers:**
+- `/web crawl the FastAPI docs and summarize key concepts`
+- `/web ingest the Stripe API reference`
+- `/web get all pages from docs.anthropic.com`
+
+**Cost:** Multiple Firecrawl credits (1 per page crawled)
+
+---
+
+### Mode: COMPARE — Cross-site analysis
+**When:** User wants to compare information across 2+ websites.
+
+**Sequence:**
+1. For each URL/site, try WebFetch first
+2. If WebFetch returns empty/broken → use Firecrawl `scrape`
+3. Collect results from all sources
+4. Build a comparison table with columns per source
+5. Highlight key differences
+
+**Example triggers:**
+- `/web compare pricing across vercel.com, netlify.com, and render.com`
+- `/web compare React vs Vue vs Svelte documentation quality`
+- `/web compare features of Supabase vs Firebase vs PlanetScale`
+
+**Cost:** 1 Firecrawl credit per page that WebFetch can't handle
+
+---
+
+### Mode: EXTRACT — Structured data from pages
+**When:** User wants specific structured data pulled from a page (tables, lists, specs).
+
+**Sequence:**
+1. Try WebFetch first
+2. If content is available but messy → use Firecrawl `scrape` for clean markdown
+3. Parse the content into the requested structure (table, JSON, list)
+4. Output in clean, copy-pasteable format
+
+**Example triggers:**
+- `/web extract all API endpoints from stripe.com/docs/api as a table`
+- `/web list all keyboard shortcuts from docs.github.com`
+- `/web get the full changelog for Python 3.13 as bullet points`
+
+**Cost:** 0-1 Firecrawl credits (only if WebFetch can't handle it)
+
+---
+
+### Mode: RESEARCH — Multi-source deep dive
+**When:** User wants a thorough answer from multiple sources, not just one page.
+
+**Sequence:**
+1. Use `WebSearch` to find 5-8 relevant sources
+2. Pick the top 3-5 most relevant results
+3. Fetch each one: WebFetch first, Firecrawl `scrape` if needed
+4. Synthesize findings across all sources
+5. Present as a structured report with:
+   - Summary (2-3 sentences)
+   - Key findings (bulleted)
+   - Source-by-source breakdown
+   - Consensus vs conflicting opinions
+   - Sources list with URLs
+
+**Example triggers:**
+- `/web research: best database for real-time chat in 2025`
+- `/web deep dive into WebSocket vs SSE vs WebTransport`
+- `/web report on the current state of Rust in production`
+
+**Cost:** 0-5 Firecrawl credits depending on how many sources need it
+
+---
+
+### Mode: MONITOR — Track changes
+**When:** User wants to know what changed on a page or wants to track updates.
+
+**Sequence:**
+1. Fetch current page content (WebFetch first, Firecrawl if needed)
+2. Check if a previous version exists in `benchmarks/results/` or local files
+3. If previous version exists: diff and report changes
+4. If no previous version: save current version as baseline
+5. Save the fetched content to a timestamped file for future comparison
+
+**Example triggers:**
+- `/web monitor vercel.com/pricing — has anything changed?`
+- `/web what's new on the React blog since last check?`
+- `/web save a snapshot of openai.com/pricing for future comparison`
+
+**Cost:** 0-1 Firecrawl credits
+
+---
+
+### Mode: SIMPLE FETCH — Single page (fallback)
+**When:** User just wants one page fetched. Use built-in tools first.
+
+**Sequence:**
+1. WebFetch → check result
+2. If empty/broken → Firecrawl `scrape`
+3. If Firecrawl fails → Playwright screenshot via Bash
+4. If all fail → WebSearch for alternative sources
+
+**Cost:** Usually 0 (WebFetch handles most pages)
+
+---
+
+## Fallback Chain (applies to ALL modes)
+
 ```
-2. Read the screenshot to extract information.
-3. If that doesn't work, try:
-```bash
-npx playwright pdf <url> page.pdf
-```
-4. If Playwright also fails → go to WebSearch fallback.
-
-### If Everything Failed — WebSearch Fallback
-1. Use `WebSearch` to find the information from alternative sources.
-2. Search for: the site name + the specific information requested.
-3. Fetch the best result using WebFetch.
-
-### For Discovery (no URL)
-1. Start with `WebSearch` (free).
-2. If results are insufficient, try Firecrawl `search`.
-3. If Firecrawl search fails, stick with WebSearch results.
-
-## CRITICAL: Fallback Behavior
-
-```
-EVERY request follows this chain. Never stop at a failed tool:
-
-  WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ──failed?──→ WebSearch
-     │                      │                       │                       │
-   success               success                 success                 success
-     │                      │                       │                       │
-     ▼                      ▼                       ▼                       ▼
-   Output                Output                  Output                  Output
-                      (note credit)
+WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ──failed?──→ WebSearch
 ```
 
-**"Failed" means ANY of these:**
-- Empty or near-empty response
-- Error message (auth, timeout, rate limit, blocked)
-- HTML with only script/style tags and no readable text
-- Tool not available or not configured
+**NEVER stop at a failed tool.** Always try the next one.
+**"Failed" = empty response, error, auth failure, script-only HTML, or tool not available.**
 
-**NEVER report failure after only trying one tool.** You must try at least WebFetch AND one other tool before reporting that content is unavailable.
+## Output Rules
 
-## Step 3: Output Format
-
-1. **Source**: URL and tool used
-2. **Content**: Clean markdown, stripped of navigation/ads/boilerplate
-3. **Fallback note**: If you had to fall back, say: "WebFetch returned empty, used Firecrawl instead" (1 line)
-4. **Credit note**: If Firecrawl was used, mention "1 Firecrawl credit used"
-
-If content is very long (>2000 words), summarize first and offer to show the full content.
-
-## Rules
-
-- **ALWAYS start with WebFetch** — even for sites you think are JS-heavy. Many serve SSR content.
-- **ALWAYS fall back** — if a tool fails, try the next one. Never stop at a failure.
-- **Conserve Firecrawl credits** — only use after WebFetch fails, not as first choice
-- **No speculative loading** — don't call multiple tools "just in case"
-- **Minimize output** — strip boilerplate, return only what was asked for
+- Lead with the answer, not the process
+- Use tables for comparisons and structured data
+- For research: include source URLs so user can verify
+- For crawls: summarize structure first, then details
+- Note Firecrawl credit usage: "X Firecrawl credits used"
+- If output is very long: summarize, then offer to show full content or save to file

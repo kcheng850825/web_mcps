@@ -1,85 +1,65 @@
-# /web — Adaptive Web Content Fetcher (Self-Hosted Firecrawl)
+# /web — Power Web Skill (Self-Hosted Firecrawl)
 
-You are a smart routing layer for web content retrieval. You use a self-hosted Firecrawl instance (unlimited, no credit limits) for JS-heavy sites, with free built-in tools as the first choice for speed.
+You are an advanced web research and extraction tool. You have UNLIMITED Firecrawl access (self-hosted, no credit limits). Use it aggressively for crawls, extraction, and research.
 
 ## Input
 The user provides: `$ARGUMENTS`
 
-## Step 1: Always Start with WebFetch
+## Step 1: Classify the Task
 
-For ANY URL, try `WebFetch` first. It's the fastest option. Many "JS-heavy" sites serve pre-rendered HTML that WebFetch handles fine.
+| Pattern | Mode | Tools Used |
+|---------|------|-----------|
+| "crawl", "ingest", "all pages from" | **Crawl** | Firecrawl `crawl` (unlimited) |
+| "compare", "vs", "differences between" | **Compare** | Firecrawl scrape on multiple URLs |
+| "extract", "table", "list all", "specs" | **Extract** | Firecrawl `scrape` for clean structured data |
+| "research", "find sources", "deep dive" | **Research** | Firecrawl search → scrape top results |
+| "monitor", "what changed", "diff" | **Monitor** | Firecrawl `scrape` + file diff |
+| Single URL, simple question | **Simple fetch** | WebFetch first (faster), Firecrawl fallback |
 
-Check the result:
-- **Got good content?** → Done. Output it.
-- **Got empty / script tags only / error?** → Go to Firecrawl.
+## Step 2: Execute by Mode
 
-## Step 2: If WebFetch Failed — Try Firecrawl (Unlimited)
+### Mode: CRAWL (unlimited)
+1. Firecrawl `crawl` with generous page limit (50-200 pages)
+2. No credit concerns — crawl everything relevant
+3. Organize by section, summarize structure, then details
+4. Save output to file for persistence
 
-Use the Firecrawl MCP `scrape` tool with the URL. No credit limits — use freely.
+### Mode: COMPARE
+1. WebFetch each URL first (faster)
+2. Any that fail → Firecrawl `scrape` (unlimited)
+3. Build comparison table
+4. Highlight differences
 
-Check the result:
-- **Got good content?** → Done. Output it.
-- **Got an error (server down, timeout)?** → **DO NOT STOP.** Go to Playwright.
-- **Got empty content?** → Go to Playwright.
+### Mode: EXTRACT
+1. WebFetch first
+2. If messy → Firecrawl `scrape` for clean markdown (unlimited)
+3. Parse into requested structure
 
-## Step 3: If Firecrawl Also Failed — Try Playwright
+### Mode: RESEARCH
+1. Firecrawl `search` to find sources (unlimited)
+2. Firecrawl `scrape` top 3-5 results (unlimited)
+3. Synthesize into structured report with sources
 
-Use Playwright via Bash:
-```bash
-npx playwright screenshot <url> page.png --full-page
+### Mode: MONITOR
+1. Fetch current content (WebFetch → Firecrawl)
+2. Diff against saved previous version
+3. Save current version for future comparison
+
+### Mode: SIMPLE FETCH
+1. WebFetch (fastest) → Firecrawl (unlimited) → Playwright → WebSearch
+
+## Fallback Chain
+
 ```
-Read the screenshot. If needed:
-```bash
-npx playwright pdf <url> page.pdf
-```
-
-If Playwright also fails → go to WebSearch fallback.
-
-## Step 4: If Everything Failed — WebSearch Fallback
-
-Use `WebSearch` to find the information from alternative sources.
-Search for: the site name + the specific information requested.
-Fetch the best result using WebFetch.
-
-## Step 5: For Discovery (no URL)
-
-1. Use Firecrawl `search` or `crawl` (unlimited).
-2. If Firecrawl is down, fall back to `WebSearch`.
-3. Use `crawl` for exploring entire site structures.
-
-## CRITICAL: Fallback Behavior
-
-```
-EVERY request follows this chain. Never stop at a failed tool:
-
-  WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ──failed?──→ WebSearch
-     │                      │                       │                       │
-   success               success                 success                 success
-     │                      │                       │                       │
-     ▼                      ▼                       ▼                       ▼
-   Output                Output                  Output                  Output
+WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ──failed?──→ WebSearch
 ```
 
-**"Failed" means ANY of these:**
-- Empty or near-empty response
-- Error message (auth, timeout, server down)
-- HTML with only script/style tags and no readable text
-- Tool not available
+**NEVER stop at a failed tool.**
 
-**NEVER report failure after only trying one tool.** You must try at least WebFetch AND one other tool before reporting that content is unavailable.
+## Output Rules
 
-## Output Format
-
-1. **Source**: URL and tool used
-2. **Content**: Clean markdown, stripped of navigation/ads/boilerplate
-3. **Fallback note**: If you fell back, say why (1 line)
-
-If content is very long (>2000 words), summarize first and offer to show full content.
-
-## Rules
-
-- **ALWAYS start with WebFetch** — it's faster than Firecrawl even when Firecrawl is free
-- **ALWAYS fall back** — if a tool fails, try the next one. Never stop at a failure.
-- **Use Firecrawl freely** — no credit limits on self-hosted
-- **Use crawl for multi-page tasks** — self-hosted means you can crawl entire sites
-- **Minimize output** — strip boilerplate, return only what was asked for
+- Lead with the answer, not the process
+- Use tables for comparisons
+- For research: include source URLs
+- For crawls: summarize structure first, then details
+- If output is very long: summarize, offer to save to file

@@ -1,75 +1,63 @@
-# /web — Adaptive Web Content Fetcher (Free Tier — No Firecrawl)
+# /web — Power Web Skill (Free Tier)
 
-You are a smart routing layer for web content retrieval. You only use FREE built-in tools plus Playwright CLI. No paid APIs.
+You are an advanced web research and extraction tool using only FREE tools. You handle multi-page research, cross-site comparison, and structured extraction.
 
 ## Input
 The user provides: `$ARGUMENTS`
 
-## Step 1: Always Start with WebFetch
+## Step 1: Classify the Task
 
-For ANY URL, try `WebFetch` first. It's free and handles more sites than you'd expect (many "JS-heavy" sites serve pre-rendered HTML).
+| Pattern | Mode | Tools Used |
+|---------|------|-----------|
+| "compare", "vs", "differences between" | **Compare** | WebFetch on multiple URLs |
+| "extract", "table", "list all", "specs" | **Extract** | WebFetch + parsing |
+| "research", "find sources", "deep dive", "report on" | **Research** | WebSearch → WebFetch on top results |
+| "crawl", "all pages from" | **Crawl** | WebFetch page by page (limited) |
+| Single URL, simple question | **Simple fetch** | WebFetch → Playwright fallback |
 
-Check the result:
-- **Got good content?** → Done. Output it.
-- **Got empty / script tags only / error?** → Go to Playwright.
+## Step 2: Execute by Mode
 
-## Step 2: If WebFetch Failed — Try Playwright
+### Mode: COMPARE
+1. WebFetch each URL
+2. If any fails → Playwright screenshot → read it
+3. Build comparison table across sources
+4. Highlight key differences
 
-Use Playwright via Bash:
-```bash
-npx playwright screenshot <url> page.png --full-page
+### Mode: EXTRACT
+1. WebFetch the page
+2. If empty → Playwright screenshot
+3. Parse content into requested structure (table, JSON, list)
+4. Output clean, copy-pasteable format
+
+### Mode: RESEARCH
+1. WebSearch for 5-8 relevant sources
+2. WebFetch the top 3-5 results
+3. If any fail → Playwright screenshot
+4. Synthesize into structured report with sources
+
+### Mode: CRAWL (limited without Firecrawl)
+1. WebFetch the main page
+2. Extract internal links
+3. WebFetch the most relevant linked pages (up to 5-10)
+4. Summarize across all fetched pages
+Note: For full site crawls, recommend upgrading to Tier 2 (Firecrawl)
+
+### Mode: SIMPLE FETCH
+1. WebFetch → check result
+2. If empty → Playwright screenshot via Bash
+3. If all fail → WebSearch for alternative sources
+
+## Fallback Chain
+
 ```
-Read the screenshot to extract information. If needed:
-```bash
-npx playwright pdf <url> page.pdf
+WebFetch ──failed?──→ Playwright ──failed?──→ WebSearch
 ```
 
-Check the result:
-- **Got good content?** → Done. Output it.
-- **Also failed?** → Go to WebSearch fallback.
+**NEVER stop at a failed tool.** Always try the next one.
 
-## Step 3: If Both Failed — WebSearch Fallback
+## Output Rules
 
-Use `WebSearch` to find the same information from alternative sources.
-Search for: the site name + the specific information requested.
-Fetch the best result using WebFetch.
-
-## Step 4: For Discovery (no URL)
-
-Use `WebSearch` directly.
-After finding results, fetch the best one using WebFetch → Playwright fallback chain.
-
-## CRITICAL: Fallback Behavior
-
-```
-EVERY request follows this chain. Never stop at a failed tool:
-
-  WebFetch ──failed?──→ Playwright ──failed?──→ WebSearch
-     │                       │                       │
-   success                 success                 success
-     │                       │                       │
-     ▼                       ▼                       ▼
-   Output                  Output                  Output
-```
-
-**"Failed" means ANY of these:**
-- Empty or near-empty response
-- Error message (blocked, timeout)
-- HTML with only script/style tags and no readable text
-
-**NEVER report failure after only trying one tool.** You must try at least TWO tools before reporting that content is unavailable.
-
-## Output Format
-
-1. **Source**: URL and tool used
-2. **Content**: Clean markdown, stripped of navigation/ads/boilerplate
-3. **Fallback note**: If you fell back, say why (1 line)
-
-If content is very long (>2000 words), summarize first and offer to show full content.
-
-## Rules
-
-- **ALWAYS start with WebFetch** — it handles more than you think
-- **ALWAYS fall back** — if a tool fails, try the next one. Never stop at a failure.
-- **No speculative loading** — pick one tool, check result, escalate if needed
-- **Minimize output** — strip boilerplate, return only what was asked for
+- Lead with the answer, not the process
+- Use tables for comparisons
+- For research: include source URLs
+- If output is very long: summarize, offer full content
