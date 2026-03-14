@@ -13,30 +13,30 @@ echo.
 :: Step 1: Check Node.js
 :: -------------------------------------------
 echo [Step 1/6] Checking Node.js...
-node --version >nul 2>&1
-if %errorlevel% neq 0 (
+where node >nul 2>&1
+if errorlevel 1 (
     echo   NOT FOUND. Please install Node.js first:
     echo   1. Go to https://nodejs.org
     echo   2. Download the LTS version
-    echo   3. Run the installer (keep all defaults)
+    echo   3. Run the installer, keep all defaults
     echo   4. Close this window and reopen Command Prompt
     echo   5. Run this script again
     pause
     exit /b 1
-) else (
-    for /f "tokens=*" %%v in ('node --version') do echo   Found Node.js %%v — OK
 )
+for /f "tokens=*" %%v in ('node --version') do echo   Found Node.js %%v — OK
 
 :: -------------------------------------------
 :: Step 2: Check Claude Code
 :: -------------------------------------------
 echo.
 echo [Step 2/6] Checking Claude Code...
-claude --version >nul 2>&1
-if %errorlevel% neq 0 (
+where claude >nul 2>&1
+if errorlevel 1 (
     echo   Not found. Installing Claude Code...
-    npm install -g @anthropic-ai/claude-code
-    if %errorlevel% neq 0 (
+    call npm install -g @anthropic-ai/claude-code
+    where claude >nul 2>&1
+    if errorlevel 1 (
         echo   ERROR: Failed to install Claude Code.
         echo   Try running Command Prompt as Administrator.
         pause
@@ -44,14 +44,15 @@ if %errorlevel% neq 0 (
     )
     echo   Installed. Now log in:
     echo.
-    claude auth login
-) else (
-    for /f "tokens=*" %%v in ('claude --version') do echo   Found Claude Code %%v — OK
+    call claude auth login
+    goto :tier_select
 )
+for /f "tokens=*" %%v in ('claude --version 2^>nul') do echo   Found Claude Code %%v — OK
 
 :: -------------------------------------------
 :: Step 3: Choose your tier
 :: -------------------------------------------
+:tier_select
 echo.
 echo ============================================
 echo   Choose Your Setup Tier
@@ -112,8 +113,8 @@ if "%TIER%"=="2" (
 if "%TIER%"=="3" (
     echo.
     echo   Self-hosted Firecrawl requires Docker.
-    docker --version >nul 2>&1
-    if %errorlevel% neq 0 (
+    where docker >nul 2>&1
+    if errorlevel 1 (
         echo   Docker NOT FOUND. You need Docker to self-host Firecrawl.
         echo   Install Docker Desktop from: https://www.docker.com/products/docker-desktop
         echo   After installing Docker, run this script again and choose option 3.
@@ -168,26 +169,14 @@ copy /y "%USERPROFILE%\.claude\commands\web.md" ".claude\commands\web.md" >nul
 echo.
 echo [Step 6/6] Verifying setup...
 
-claude --version >nul 2>&1
-if %errorlevel%==0 (
-    echo   Claude Code — OK
-) else (
-    echo   Claude Code — MISSING
-)
+where claude >nul 2>&1
+if errorlevel 1 (echo   Claude Code — MISSING) else (echo   Claude Code — OK)
 
-node --version >nul 2>&1
-if %errorlevel%==0 (
-    echo   Node.js — OK
-) else (
-    echo   Node.js — MISSING
-)
+where node >nul 2>&1
+if errorlevel 1 (echo   Node.js — MISSING) else (echo   Node.js — OK)
 
-npx playwright --version >nul 2>&1
-if %errorlevel%==0 (
-    echo   Playwright — OK
-) else (
-    echo   Playwright — MISSING
-)
+where npx >nul 2>&1
+if errorlevel 1 (echo   Playwright — MISSING) else (echo   Playwright — OK)
 
 if "%TIER%"=="2" echo   Firecrawl Cloud — CONFIGURED
 if "%TIER%"=="3" echo   Firecrawl Self-Hosted — CONFIGURED
