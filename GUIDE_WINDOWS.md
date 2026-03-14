@@ -1,307 +1,216 @@
 # Windows Setup Guide — From Zero to /web Skill
 
-This guide assumes you're starting fresh on Windows with no coding experience.
-Every step tells you exactly what to open, type, and expect.
+No coding experience needed. Every step: what to type, what to expect.
 
 ---
 
-## Step 0: Open Your Terminal
+## Step 0: Open Terminal
 
-1. Press **Windows key** on your keyboard
+1. Press **Windows key**
 2. Type **cmd**
-3. Right-click **Command Prompt** and choose **Run as administrator**
-4. A black window opens — this is your terminal. All commands below go here.
+3. Right-click **Command Prompt** → **Run as administrator**
+4. Black window opens — all commands go here
 
-> **Tip:** After you paste a command, press **Enter** to run it.
-> To paste in Command Prompt: right-click inside the window.
+> **Paste in Command Prompt:** right-click inside the window. Press **Enter** to run.
 
 ---
 
-## Step 1: Check if Node.js is Installed
-
-Type this and press Enter:
+## Step 1: Check Node.js
 
 ```
 node --version
 ```
-
-**If you see a version number** (like `v20.11.0`) — skip to Step 2.
-
-**If you see an error** ("not recognized") — install Node.js:
-
-1. Open your browser and go to: https://nodejs.org
-2. Click the big green **LTS** download button
-3. Run the installer — click **Next** on everything, keep all defaults checked
-4. **Important:** Make sure "Add to PATH" is checked (it is by default)
-5. Close and reopen Command Prompt (so it picks up the new install)
-6. Run `node --version` again to confirm it works
+**Expect:** `v20.11.0` or similar → go to Step 2.
+**If "not recognized":**
+1. Go to https://nodejs.org → click green **LTS** button → run installer (keep defaults)
+2. Close and reopen Command Prompt
+3. Run `node --version` again
 
 ---
 
-## Step 2: Install Claude Code
-
-```
-npm install -g @anthropic-ai/claude-code
-```
-
-This may take a minute. When it's done, verify:
-
-```
-claude --version
-```
-
-You should see a version number.
-
-### Log In
-
-```
-claude auth login
-```
-
-This opens your browser. Log in with your claude.ai account (the same one for your Max plan). No API key needed.
-
----
-
-## Step 3: Clone This Repository
-
-First, check if Git is installed:
+## Step 2: Check Git
 
 ```
 git --version
 ```
+**Expect:** `git version 2.x.x` → go to Step 3.
+**If "not recognized":** Go to https://git-scm.com/download/win → install (keep defaults) → reopen cmd.
 
-**If you see an error**, install Git:
-1. Go to https://git-scm.com/download/win
-2. Download and run the installer — keep all defaults
-3. Close and reopen Command Prompt
+---
 
-Now clone the repo:
+## Step 3: Clone the Repo
 
 ```
 cd %USERPROFILE%\Documents
 git clone https://github.com/kcheng850825/web_mcps.git
 cd web_mcps
 ```
-
-You now have all the files on your computer at `Documents\web_mcps`.
-
----
-
-## Step 4: Install Firecrawl MCP
-
-Firecrawl is the key tool — it turns messy web pages into clean markdown and saves ~70% of tokens.
-
-### 4a: Get a Firecrawl API Key
-
-1. Go to https://www.firecrawl.dev
-2. Sign up for a free account
-3. Go to your dashboard and copy your **API key** (starts with `fc-`)
-4. Keep this key handy — you'll need it in the next step
-
-### 4b: Add Firecrawl to Claude Code
-
-Run this command (replace `fc-YOUR-KEY-HERE` with your actual key):
-
-```
-claude mcp add firecrawl -e FIRECRAWL_API_KEY=fc-YOUR-KEY-HERE -- npx -y firecrawl-mcp
-```
-
-Verify it was added:
-
-```
-claude mcp list
-```
-
-You should see `firecrawl` in the list.
+**Expect:** `Cloning into 'web_mcps'...` then done.
 
 ---
 
-## Step 5: Install Fetch MCP (Lightweight Fallback)
+## Step 4: Run the Setup Script
 
 ```
-claude mcp add fetch -- npx -y @anthropic-ai/fetch-mcp
+setup.bat
 ```
 
-This is a simple fetcher that handles basic pages with minimal overhead.
+The script does everything automatically. It will:
+
+### 4a: Check/install Claude Code
+**Expect:** Either `Found Claude Code` or it installs and asks you to log in.
+If it asks to log in → browser opens → sign in with your claude.ai account.
+
+### 4b: Ask you to choose a tier
+
+```
+============================================
+  Choose Your Setup Tier
+============================================
+
+  [1] FREE — No accounts needed ($0)
+      Uses: WebFetch + WebSearch + Playwright
+
+  [2] FIRECRAWL CLOUD — Free tier available ($0-$16/mo)
+      Uses: Everything in #1 + Firecrawl API
+      (500 free pages/month)
+
+  [3] SELF-HOSTED FIRECRAWL — Unlimited ($0)
+      Uses: Everything in #2 but self-hosted
+      (requires Docker)
+
+Enter 1, 2, or 3:
+```
+
+**Type `1`, `2`, or `3` and press Enter.**
+
+| Tier | Cost | Best for | What you need |
+|------|------|----------|---------------|
+| **1** | $0 | Most people starting out | Nothing extra |
+| **2** | $0 (free tier) | Better quality on JS sites | Firecrawl account (2 min signup) |
+| **3** | $0 | Power users, unlimited | Docker installed |
+
+### If you chose 2:
+**Expect:** Script asks for your Firecrawl API key.
+1. Go to https://www.firecrawl.dev → sign up → go to dashboard → copy API key
+2. Paste it into the terminal and press Enter
+
+### If you chose 3:
+**Expect:** Script checks for Docker and starts a Firecrawl container.
+If Docker isn't installed, it tells you and falls back to Tier 1.
+
+### 4c: Installs Playwright
+**Expect:** Downloads browser engines (~500MB). Takes 3-5 min. This is normal.
+
+### 4d: Installs the /web skill
+**Expect:** `Installed: [your tier] tier`
+
+### 4e: Verifies everything
+**Expect:**
+```
+[Step 6/6] Verifying setup...
+  Claude Code — OK
+  Node.js — OK
+  Playwright — OK
+  /web skill — INSTALLED
+
+============================================
+  Setup Complete! (Tier X)
+============================================
+```
 
 ---
 
-## Step 6: Install Playwright (For Interactive Sites)
-
-```
-npx playwright install
-```
-
-This downloads browser engines (Chromium, Firefox, WebKit). It may take a few minutes and use ~500MB of disk space. This is normal.
-
-> **Note:** We use Playwright as a CLI tool, NOT as an MCP server.
-> This uses 4x fewer tokens than the Playwright MCP approach.
-
----
-
-## Step 7: Install the /web Skill
-
-The skill file needs to be in your project's `.claude/commands/` folder.
-From inside the `web_mcps` directory, it's already there. But to use it in
-**any** project, copy it:
-
-```
-mkdir %USERPROFILE%\.claude\commands 2>nul
-copy .claude\commands\web.md %USERPROFILE%\.claude\commands\web.md
-```
-
-Now `/web` works in every Claude Code session, regardless of which folder you're in.
-
----
-
-## Step 8: Verify Everything Works
+## Step 5: Test It
 
 Start Claude Code:
-
 ```
 claude
 ```
+**Expect:** Claude Code session opens in your terminal.
 
-Once inside the Claude session, test each piece:
-
-### Test 1 — The /web skill exists
-Type:
+Type inside the session:
 ```
 /web What is the latest Python version?
 ```
-Claude should use WebSearch or WebFetch and give you an answer.
+**Expect:** Claude fetches and answers the question.
 
-### Test 2 — Firecrawl works
-Type:
-```
-/web Get the pricing tiers from vercel.com/pricing
-```
-Claude should route to Firecrawl and return clean pricing data.
-
-### Test 3 — Check your token usage
-Type:
+Check tokens:
 ```
 /cost
 ```
-Note the token count. This is your baseline for comparison.
+**Expect:** Shows token counts for this session.
 
 ---
 
-## Step 9: Run Benchmarks
+## Step 6: Run Benchmarks (Optional)
 
-The benchmark runner helps you measure how much the /web skill improves things.
-
-### 9a: Run the Benchmark Script
-
-From the `web_mcps` folder, run:
+Exit Claude first (type `/exit` or press `Ctrl+C`), then:
 
 ```
 benchmarks\run_benchmark.bat
 ```
 
-The script walks you through 10 test cases. For each one:
-1. It tells you what to test
-2. You run the task in Claude Code **without** `/web` (baseline)
-3. You run the same task **with** `/web` (skill)
-4. You type in the scores (completeness, accuracy, tokens, turns)
+**Expect:** Asks your name, then walks you through 10 tests. For each test:
+1. Tells you what to search/fetch
+2. You run it in Claude **without** `/web` → type your scores
+3. You run it **with** `/web` → type your scores
 
-Results are saved as a JSON file in `benchmarks\results\`.
+Takes ~30 min for all 10 tests.
 
-### 9b: View the Dashboard
+---
 
-Open the dashboard in your browser:
+## Step 7: View Dashboard
 
 ```
 start dashboard\index.html
 ```
 
-1. Click **"Load Results JSON"**
-2. Navigate to `benchmarks\results\` and pick your results file
-3. Or click **"load sample data"** to see it with demo numbers first
-
-The dashboard shows:
-- **Efficiency scores** — higher means more info per token
-- **Token savings** — percentage saved vs baseline
-- **Bar charts** — visual comparison per test
-- **Detail table** — every test broken down
+**Expect:** Browser opens with a dark dashboard. Click **"load sample data"** to preview, or **"Load Results JSON"** to load your benchmark results from `benchmarks\results\`.
 
 ---
 
-## Step 10: Daily Usage
-
-Once everything is set up, your daily workflow is just:
+## Daily Usage
 
 ```
 claude
 ```
-
-Then inside Claude:
+Then:
 ```
-/web <what you want to find or fetch>
+/web <what you want>
 ```
 
-### Examples
-
+**Examples:**
 ```
-/web summarize the blog post at https://example.com/article
-/web get the API pricing from openai.com/pricing
-/web find a comparison of React vs Vue in 2025
+/web summarize https://blog.rust-lang.org/
+/web get pricing from vercel.com/pricing
+/web find best Python web frameworks 2025
 /web scrape the feature list from figma.com/features
 ```
 
-### Token-Saving Tips
+**Useful commands inside Claude:**
+| Command | What it does |
+|---------|-------------|
+| `/cost` | See token usage |
+| `/clear` | Reset context (do this between tasks) |
+| `/compact` | Compress context when getting full |
+| `/context` | Check how full your context window is |
 
-- Run `/clear` when starting a new task
-- Check `/cost` to see how many tokens you've used
-- Run `/compact` if `/context` shows you're over 80% full
-- Be specific in your prompts — vague = more back-and-forth = more tokens
+---
+
+## Switching Tiers Later
+
+Want to upgrade from Tier 1 to 2? Just run `setup.bat` again and pick a different number. It overwrites the old skill with the new one.
 
 ---
 
 ## Troubleshooting
 
-### "node is not recognized"
-Close and reopen Command Prompt after installing Node.js. If it still
-doesn't work, reinstall Node.js and make sure "Add to PATH" is checked.
-
-### "claude is not recognized"
-Run `npm install -g @anthropic-ai/claude-code` again. Then close and
-reopen Command Prompt.
-
-### Firecrawl isn't working
-Check your API key: `claude mcp list` should show firecrawl.
-If the key is wrong, remove and re-add:
-```
-claude mcp remove firecrawl
-claude mcp add firecrawl -e FIRECRAWL_API_KEY=fc-YOUR-CORRECT-KEY -- npx -y firecrawl-mcp
-```
-
-### Playwright times out
-Some sites are slow. Try adding `--timeout 60000` if running playwright
-commands manually. Or let the /web skill fall back to Firecrawl.
-
-### Dashboard is blank
-Make sure you loaded a JSON file. Click "load sample data" first to
-verify the dashboard itself works.
-
----
-
-## File Locations Reference
-
-After setup, here's where everything lives:
-
-```
-%USERPROFILE%\
-├── Documents\
-│   └── web_mcps\                      ← This repo
-│       ├── .claude\commands\web.md    ← The skill (project copy)
-│       ├── benchmarks\                ← Test cases and results
-│       └── dashboard\index.html       ← Scoring dashboard
-│
-├── .claude\
-│   └── commands\
-│       └── web.md                     ← The skill (global copy)
-│
-└── AppData\                           ← Auto-managed by tools
-    └── (node modules, playwright browsers, etc.)
-```
+| Problem | Fix |
+|---------|-----|
+| `node is not recognized` | Reopen cmd after installing Node.js |
+| `claude is not recognized` | Run `npm install -g @anthropic-ai/claude-code` again, reopen cmd |
+| Firecrawl not working | Run `claude mcp list` — if missing, run `setup.bat` again with Tier 2 |
+| Playwright timeout | Normal for slow sites — skill auto-falls back to other tools |
+| Dashboard blank | Click "load sample data" first to verify it works |
+| Setup script won't run | Make sure you're in the `web_mcps` folder: `cd %USERPROFILE%\Documents\web_mcps` |
