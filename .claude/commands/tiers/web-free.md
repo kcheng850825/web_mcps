@@ -5,62 +5,71 @@ You are a smart routing layer for web content retrieval. You only use FREE built
 ## Input
 The user provides: `$ARGUMENTS`
 
-## Step 1: Classify the Task
+## Step 1: Always Start with WebFetch
 
-| Signal | Classification | Tool to Use |
-|--------|---------------|-------------|
-| URL points to static docs, blog, wiki, plain HTML | **Static content** | Built-in `WebFetch` |
-| URL is a JS-heavy site (SPA, React, dashboard) | **JS-rendered** | Playwright CLI |
-| Need to click, log in, fill forms, scroll | **Interactive** | Playwright CLI |
-| No specific URL — searching for information | **Discovery** | Built-in `WebSearch` |
+For ANY URL, try `WebFetch` first. It's free and handles more sites than you'd expect (many "JS-heavy" sites serve pre-rendered HTML).
 
-## Step 2: Execute
+Check the result:
+- **Got good content?** → Done. Output it.
+- **Got empty / script tags only / error?** → Go to Playwright.
 
-### Route A: Static Content → WebFetch (zero overhead)
-Use the built-in `WebFetch` tool directly.
-- Best for: documentation, blogs, wikis, GitHub READMEs, plain HTML
-- If it returns empty or garbled content → escalate to Route B
+## Step 2: If WebFetch Failed — Try Playwright
 
-### Route B: JS-Rendered or Interactive → Playwright CLI
-Use Playwright via Bash to get the page content:
+Use Playwright via Bash:
 ```bash
-# Get page as text (after JS renders)
 npx playwright screenshot <url> page.png --full-page
 ```
-Then read the screenshot, or:
+Read the screenshot to extract information. If needed:
 ```bash
-# Save page as PDF for text extraction
 npx playwright pdf <url> page.pdf
 ```
-- Use this for any page that WebFetch can't render
-- Keep commands minimal — each costs more tokens than WebFetch
 
-### Route C: Discovery → WebSearch
-Use the built-in `WebSearch` tool.
-- Best for: "find information about X" without a specific URL
-- After finding results, fetch the best one using Route A or B
+Check the result:
+- **Got good content?** → Done. Output it.
+- **Also failed?** → Go to WebSearch fallback.
 
-## Step 3: Fallback Chain
+## Step 3: If Both Failed — WebSearch Fallback
+
+Use `WebSearch` to find the same information from alternative sources.
+Search for: the site name + the specific information requested.
+Fetch the best result using WebFetch.
+
+## Step 4: For Discovery (no URL)
+
+Use `WebSearch` directly.
+After finding results, fetch the best one using WebFetch → Playwright fallback chain.
+
+## CRITICAL: Fallback Behavior
 
 ```
-WebFetch (free) → Playwright CLI (free) → Report failure with details
-WebSearch (free) → WebFetch on results → Playwright on results → Report failure
+EVERY request follows this chain. Never stop at a failed tool:
+
+  WebFetch ──failed?──→ Playwright ──failed?──→ WebSearch
+     │                       │                       │
+   success                 success                 success
+     │                       │                       │
+     ▼                       ▼                       ▼
+   Output                  Output                  Output
 ```
 
-**Never retry the same tool more than once.** Move to the next option immediately.
+**"Failed" means ANY of these:**
+- Empty or near-empty response
+- Error message (blocked, timeout)
+- HTML with only script/style tags and no readable text
 
-## Step 4: Output Format
+**NEVER report failure after only trying one tool.** You must try at least TWO tools before reporting that content is unavailable.
+
+## Output Format
 
 1. **Source**: URL and tool used
 2. **Content**: Clean markdown, stripped of navigation/ads/boilerplate
-3. **Token note**: Which tool and why (1 line)
+3. **Fallback note**: If you fell back, say why (1 line)
 
 If content is very long (>2000 words), summarize first and offer to show full content.
 
 ## Rules
 
-- **All tools are free** — no API keys or paid services needed
-- **WebFetch first** — always try it before Playwright (cheaper)
-- **No speculative loading** — pick one tool and commit
-- **Fail fast** — if a tool returns empty/error, immediately try the next
+- **ALWAYS start with WebFetch** — it handles more than you think
+- **ALWAYS fall back** — if a tool fails, try the next one. Never stop at a failure.
+- **No speculative loading** — pick one tool, check result, escalate if needed
 - **Minimize output** — strip boilerplate, return only what was asked for
