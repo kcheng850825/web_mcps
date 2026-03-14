@@ -5,69 +5,81 @@ You are a smart routing layer for web content retrieval. You use a self-hosted F
 ## Input
 The user provides: `$ARGUMENTS`
 
-## Step 1: Classify the Task
+## Step 1: Always Start with WebFetch
 
-| Signal | Classification | Tool to Use |
-|--------|---------------|-------------|
-| URL points to static docs, blog, wiki, plain HTML | **Static content** | Built-in `WebFetch` |
-| URL is a JS-heavy site (SPA, React, dashboard) | **JS-rendered** | Firecrawl `scrape` |
-| Need to click, log in, fill forms, scroll | **Interactive** | Playwright CLI |
-| No specific URL — searching for information | **Discovery** | Firecrawl `search` |
-| URL is blocked or previously failed with WebFetch | **Blocked/failed** | Firecrawl `scrape` |
-| Need to scrape entire site structure | **Full crawl** | Firecrawl `crawl` |
+For ANY URL, try `WebFetch` first. It's the fastest option. Many "JS-heavy" sites serve pre-rendered HTML that WebFetch handles fine.
 
-## Step 2: Execute
+Check the result:
+- **Got good content?** → Done. Output it.
+- **Got empty / script tags only / error?** → Go to Firecrawl.
 
-### Route A: Static Content → WebFetch (fastest, zero overhead)
-Use the built-in `WebFetch` tool directly.
-- Best for: documentation, blogs, wikis, GitHub READMEs, plain HTML
-- If it returns empty or garbled content → escalate to Route B
+## Step 2: If WebFetch Failed — Try Firecrawl (Unlimited)
 
-### Route B: JS-Rendered Content → Firecrawl (unlimited, self-hosted)
-Use the Firecrawl MCP `scrape` tool with the URL.
-- Request markdown format for clean output
-- No credit limits — use freely for any JS-rendered page
-- Best for: modern web apps, pricing pages, API docs on JS frameworks
-- If Firecrawl is unavailable → escalate to Route C
+Use the Firecrawl MCP `scrape` tool with the URL. No credit limits — use freely.
 
-### Route C: Interactive Content → Playwright CLI
+Check the result:
+- **Got good content?** → Done. Output it.
+- **Got an error (server down, timeout)?** → **DO NOT STOP.** Go to Playwright.
+- **Got empty content?** → Go to Playwright.
+
+## Step 3: If Firecrawl Also Failed — Try Playwright
+
 Use Playwright via Bash:
 ```bash
 npx playwright screenshot <url> page.png --full-page
+```
+Read the screenshot. If needed:
+```bash
 npx playwright pdf <url> page.pdf
 ```
-- Best for: sites requiring clicks, login, cookie consent, infinite scroll
-- Only use when Routes A and B cannot get the content
 
-### Route D: Discovery → Firecrawl Search (unlimited)
-Use Firecrawl MCP `search` or `crawl` tool.
-- No credit limits — use freely
-- Best for: "find information about X" without a specific URL
-- Use `crawl` for exploring entire site structures
-- After finding results, fetch the best one using Route A or B
+If Playwright also fails → go to WebSearch fallback.
 
-## Step 3: Fallback Chain
+## Step 4: If Everything Failed — WebSearch Fallback
+
+Use `WebSearch` to find the information from alternative sources.
+Search for: the site name + the specific information requested.
+Fetch the best result using WebFetch.
+
+## Step 5: For Discovery (no URL)
+
+1. Use Firecrawl `search` or `crawl` (unlimited).
+2. If Firecrawl is down, fall back to `WebSearch`.
+3. Use `crawl` for exploring entire site structures.
+
+## CRITICAL: Fallback Behavior
 
 ```
-WebFetch (fast) → Firecrawl scrape (unlimited) → Playwright CLI → Report failure
-Firecrawl search (unlimited) → Firecrawl crawl → WebSearch → Report failure
+EVERY request follows this chain. Never stop at a failed tool:
+
+  WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ──failed?──→ WebSearch
+     │                      │                       │                       │
+   success               success                 success                 success
+     │                      │                       │                       │
+     ▼                      ▼                       ▼                       ▼
+   Output                Output                  Output                  Output
 ```
 
-**Never retry the same tool more than once.** Move to the next option immediately.
+**"Failed" means ANY of these:**
+- Empty or near-empty response
+- Error message (auth, timeout, server down)
+- HTML with only script/style tags and no readable text
+- Tool not available
 
-## Step 4: Output Format
+**NEVER report failure after only trying one tool.** You must try at least WebFetch AND one other tool before reporting that content is unavailable.
+
+## Output Format
 
 1. **Source**: URL and tool used
 2. **Content**: Clean markdown, stripped of navigation/ads/boilerplate
-3. **Token note**: Which tool and why (1 line)
+3. **Fallback note**: If you fell back, say why (1 line)
 
 If content is very long (>2000 words), summarize first and offer to show full content.
 
 ## Rules
 
-- **WebFetch first for static pages** — it's faster than Firecrawl even though Firecrawl is free
-- **Firecrawl freely for everything else** — no credit limits on self-hosted
+- **ALWAYS start with WebFetch** — it's faster than Firecrawl even when Firecrawl is free
+- **ALWAYS fall back** — if a tool fails, try the next one. Never stop at a failure.
+- **Use Firecrawl freely** — no credit limits on self-hosted
 - **Use crawl for multi-page tasks** — self-hosted means you can crawl entire sites
-- **No speculative loading** — pick one tool and commit
-- **Fail fast** — if a tool returns empty/error, immediately try the next
 - **Minimize output** — strip boilerplate, return only what was asked for
