@@ -1,0 +1,220 @@
+{
+  "meta": {
+    "date": "2026-03-13",
+    "runner": "auto-benchmark",
+    "mode": "subscription",
+    "notes": "Power use case benchmark v2 — multi-page, multi-source, structured extraction tasks. Baseline used WebFetch+WebSearch only; Skill used Firecrawl scrape/search/extract. WebFetch permissions were denied for many agents, so baseline relied heavily on WebSearch."
+  },
+  "runs": [
+    {
+      "test_id": 1,
+      "test_name": "Cross-site pricing comparison",
+      "category": "compare",
+      "baseline": {
+        "tool_used": "WebFetch x5 + WebSearch x3",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 18,
+        "turns": 5,
+        "notes": "Got Vercel fully, Netlify via docs fallback, Render only partial from search snippets. WebFetch denied for netlify.com and render.com."
+      },
+      "skill": {
+        "tool_used": "firecrawl_scrape x3 (JSON)",
+        "completeness": 3,
+        "accuracy": 2,
+        "tokens_used": 17,
+        "turns": 1,
+        "notes": "All 3 sites scraped in 1 parallel turn with JSON extraction. Full pricing tiers for all 3 providers. Minor gaps in Vercel's opaque usage-based model."
+      }
+    },
+    {
+      "test_id": 2,
+      "test_name": "GitHub REST API Repositories endpoints",
+      "category": "extract",
+      "baseline": {
+        "tool_used": "WebFetch x13 + WebSearch x3",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 23,
+        "turns": 7,
+        "notes": "58 endpoints found. JS-rendered docs.github.com returned empty; fell back to Enterprise Server 3.13 mirror pages. Missing branches, commits, statuses sub-sections (404 on Enterprise)."
+      },
+      "skill": {
+        "tool_used": "firecrawl_scrape x10",
+        "completeness": 2,
+        "accuracy": 3,
+        "tokens_used": 36,
+        "turns": 4,
+        "notes": "59 endpoints extracted from 8 sub-pages via JSON extraction with waitFor. JS-rendered pages handled cleanly. Accuracy improved — all endpoints verified against index ToC. A few endpoints missed by LLM extraction on dense pages."
+      }
+    },
+    {
+      "test_id": 3,
+      "test_name": "Backend framework research",
+      "category": "research",
+      "baseline": {
+        "tool_used": "WebSearch x1",
+        "completeness": 1,
+        "accuracy": 2,
+        "tokens_used": 13,
+        "turns": 2,
+        "notes": "WebFetch denied for all 5 source URLs. Only snippet-level data from WebSearch. Got framework names and basic recommendations but no benchmark data or deep analysis."
+      },
+      "skill": {
+        "tool_used": "firecrawl_search x1 + firecrawl_scrape x5",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 58,
+        "turns": 3,
+        "notes": "Full articles scraped from GfG, Coderio, dev.to. Got ASGI benchmark numbers (Litestar 50k RPS, FastAPI 45k), serverless cold start data, detailed framework comparison matrix. Reddit blocked by Firecrawl."
+      }
+    },
+    {
+      "test_id": 4,
+      "test_name": "Claude API docs crawl",
+      "category": "crawl",
+      "baseline": {
+        "tool_used": "WebSearch x8",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 20,
+        "turns": 4,
+        "notes": "~20 pages surfaced via WebSearch snippets. Got all major API categories and beta headers. Missing exact parameter schemas and response details."
+      },
+      "skill": {
+        "tool_used": "firecrawl_scrape x11",
+        "completeness": 2,
+        "accuracy": 3,
+        "tokens_used": 47,
+        "turns": 5,
+        "notes": "10 pages scraped directly. Got exact parameters, response schemas, rate limits. Some pages too large (100k+ chars) for inline parsing. firecrawl_map and firecrawl_crawl denied. Accuracy improved to 3/3 — data verified from source."
+      }
+    },
+    {
+      "test_id": 5,
+      "test_name": "GitHub features comparison matrix",
+      "category": "extract",
+      "baseline": {
+        "tool_used": "WebFetch x2",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 13,
+        "turns": 1,
+        "notes": "Found matrix at github.com/pricing (not /features). Partial extraction — React-rendered checkmarks didn't render. 9 categories, most major rows captured."
+      },
+      "skill": {
+        "tool_used": "firecrawl_scrape x2",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 37,
+        "turns": 2,
+        "notes": "Same matrix found at /pricing. React hydration 'Uh oh!' errors replaced dynamic check/X icons even with waitFor:8000. Reconstructed from surrounding copy. No improvement over baseline for this heavily JS-rendered grid."
+      }
+    },
+    {
+      "test_id": 6,
+      "test_name": "WebSocket vs SSE vs WebTransport",
+      "category": "research",
+      "baseline": {
+        "tool_used": "WebSearch x4",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 15,
+        "turns": 3,
+        "notes": "7 sources from WebSearch snippets. Good synthesis of all 3 dimensions (performance, browser support, use cases). WebFetch denied — no full article reads."
+      },
+      "skill": {
+        "tool_used": "firecrawl_search x2 + firecrawl_scrape x3",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 48,
+        "turns": 3,
+        "notes": "MDN pages scraped directly — got exact browser version compatibility tables, protocol architecture details, performance characteristics. Stack Overflow benchmark data. Perfect score."
+      }
+    },
+    {
+      "test_id": 7,
+      "test_name": "Supabase vs Firebase vs PlanetScale",
+      "category": "compare",
+      "baseline": {
+        "tool_used": "WebSearch x4",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 16,
+        "turns": 3,
+        "notes": "WebFetch denied for all 3 sites. WebSearch with domain filtering gave solid feature lists from official sites. PlanetScale dual positioning (Vitess+Postgres) captured."
+      },
+      "skill": {
+        "tool_used": "firecrawl_scrape x3 (JSON)",
+        "completeness": 2,
+        "accuracy": 3,
+        "tokens_used": 18,
+        "turns": 1,
+        "notes": "All 3 homepages scraped in 1 parallel turn. Accuracy improved — features directly from official pages. Completeness limited to homepage-level features; deeper /features pages would improve."
+      }
+    },
+    {
+      "test_id": 8,
+      "test_name": "Stripe Charges API operations",
+      "category": "crawl",
+      "baseline": {
+        "tool_used": "WebSearch x3",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 14,
+        "turns": 1,
+        "notes": "6 operations found with key parameters from search snippets. Missing deeper/Connect-only params (transfer_data, radar_options, on_behalf_of). WebFetch denied."
+      },
+      "skill": {
+        "tool_used": "firecrawl_scrape x2",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 29,
+        "turns": 2,
+        "notes": "All 6 operations with complete parameter lists including Connect-only fields. Stripe renders all operations on one page — single markdown scrape captured everything. Deprecation notice correctly captured."
+      }
+    },
+    {
+      "test_id": 9,
+      "test_name": "Node.js changelog extraction",
+      "category": "extract",
+      "baseline": {
+        "tool_used": "WebFetch x6",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 15,
+        "turns": 2,
+        "notes": "All 5 releases extracted perfectly. nodejs.org is server-rendered — WebFetch handled it cleanly. Parallel fetches of individual release pages."
+      },
+      "skill": {
+        "tool_used": "firecrawl_scrape x6",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 21,
+        "turns": 2,
+        "notes": "Same perfect score. Server-rendered pages work equally well with both tools. Firecrawl JSON extraction provided clean structured data. Concurrency throttling noted but all calls succeeded."
+      }
+    },
+    {
+      "test_id": 10,
+      "test_name": "TypeScript vs JavaScript decision research",
+      "category": "research",
+      "baseline": {
+        "tool_used": "WebSearch x4",
+        "completeness": 3,
+        "accuracy": 2,
+        "tokens_used": 18,
+        "turns": 3,
+        "notes": "6+ sources per side from WebSearch snippets. Comprehensive synthesis with specific arguments. Stats (15% bug reduction, 60M weekly npm downloads) plausible but unverified — WebFetch denied."
+      },
+      "skill": {
+        "tool_used": "firecrawl_search x2 + WebSearch x4",
+        "completeness": 3,
+        "accuracy": 2,
+        "tokens_used": 22,
+        "turns": 3,
+        "notes": "firecrawl_search with scrapeOptions returned 112k-119k char results — too large to parse. Fell back to WebSearch. Same scores as baseline. Key finding: scrapeOptions overflow is a failure mode."
+      }
+    }
+  ]
+}
