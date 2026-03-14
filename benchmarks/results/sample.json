@@ -1,0 +1,141 @@
+{
+  "meta": {
+    "date": "2026-03-14",
+    "runner": "your-name",
+    "notes": "First benchmark run — baseline vs /web skill"
+  },
+  "runs": [
+    {
+      "test_id": 1,
+      "test_name": "Python 3.12 docs",
+      "category": "static",
+      "url": "https://docs.python.org/3/whatsnew/3.12.html",
+      "baseline": {
+        "tool_used": "WebFetch",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 4200,
+        "turns": 1,
+        "notes": "WebFetch got full content directly"
+      },
+      "skill": {
+        "tool_used": "WebFetch",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 4400,
+        "turns": 1,
+        "notes": "Skill correctly routed to WebFetch, minimal overhead"
+      }
+    },
+    {
+      "test_id": 2,
+      "test_name": "Rust blog post",
+      "category": "static",
+      "url": "https://blog.rust-lang.org/",
+      "baseline": {
+        "tool_used": "WebFetch",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 5100,
+        "turns": 2,
+        "notes": "Got partial content, some formatting lost"
+      },
+      "skill": {
+        "tool_used": "WebFetch",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 4800,
+        "turns": 1,
+        "notes": "Skill used WebFetch, clean extraction"
+      }
+    },
+    {
+      "test_id": 3,
+      "test_name": "Vercel pricing",
+      "category": "js-heavy",
+      "url": "https://vercel.com/pricing",
+      "baseline": {
+        "tool_used": "WebFetch",
+        "completeness": 0,
+        "accuracy": 0,
+        "tokens_used": 8500,
+        "turns": 3,
+        "notes": "WebFetch got empty shell, retried twice, still failed"
+      },
+      "skill": {
+        "tool_used": "Firecrawl",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 3200,
+        "turns": 1,
+        "notes": "Skill routed to Firecrawl, got all pricing tiers"
+      }
+    },
+    {
+      "test_id": 4,
+      "test_name": "React useState docs",
+      "category": "js-heavy",
+      "url": "https://react.dev/reference/react/useState",
+      "baseline": {
+        "tool_used": "WebFetch",
+        "completeness": 1,
+        "accuracy": 1,
+        "tokens_used": 12000,
+        "turns": 3,
+        "notes": "Got partial content, missed interactive examples"
+      },
+      "skill": {
+        "tool_used": "Firecrawl",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 4100,
+        "turns": 1,
+        "notes": "Clean markdown with full API reference"
+      }
+    },
+    {
+      "test_id": 7,
+      "test_name": "Python HTTP libraries comparison",
+      "category": "discovery",
+      "url": null,
+      "baseline": {
+        "tool_used": "WebSearch",
+        "completeness": 2,
+        "accuracy": 2,
+        "tokens_used": 9800,
+        "turns": 4,
+        "notes": "Found results but had to fetch multiple pages"
+      },
+      "skill": {
+        "tool_used": "Firecrawl search",
+        "completeness": 3,
+        "accuracy": 3,
+        "tokens_used": 5200,
+        "turns": 2,
+        "notes": "Firecrawl search found best article, one fetch got everything"
+      }
+    },
+    {
+      "test_id": 10,
+      "test_name": "Figma features page",
+      "category": "failure-case",
+      "url": "https://www.figma.com/features",
+      "baseline": {
+        "tool_used": "WebFetch",
+        "completeness": 0,
+        "accuracy": 0,
+        "tokens_used": 6200,
+        "turns": 2,
+        "notes": "SPA returned empty content"
+      },
+      "skill": {
+        "tool_used": "Firecrawl",
+        "completeness": 3,
+        "accuracy": 2,
+        "tokens_used": 3800,
+        "turns": 1,
+        "notes": "Got feature list, some descriptions truncated"
+      }
+    }
+  ]
+}
