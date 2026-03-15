@@ -4,13 +4,29 @@
 
 A Claude Code skill (`/web`) that adaptively routes web content requests to the best available tool, maximizing information quality while minimizing token waste.
 
+## Install /web Globally (Use in Any Session)
+
+```bash
+git clone https://github.com/kcheng850825/web_mcps.git
+cd web_mcps
+./install.sh              # Firecrawl Cloud (default)
+./install.sh free         # Free tier (no Firecrawl needed)
+./install.sh selfhost     # Self-hosted Firecrawl (unlimited)
+```
+
+This copies the skill to `~/.claude/commands/web.md` so it works in **every Claude Code session** — CLI and desktop app.
+
+To uninstall: `rm ~/.claude/commands/web.md`
+
 ## Project Structure
 
 ```
 web_mcps/
 ├── CLAUDE.md                          # This file
+├── install.sh                         # Global installer script
 ├── claude_md.md                       # Original planning document
 ├── .claude/commands/web.md            # The /web skill (slash command)
+├── .claude/commands/tiers/            # Tier variants (free, selfhost, cloud)
 ├── benchmarks/
 │   ├── test_cases.md                  # 10 benchmark test cases
 │   ├── run_benchmark.sh               # Interactive benchmark runner
