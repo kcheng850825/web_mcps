@@ -7,6 +7,8 @@ The user provides: `$ARGUMENTS`
 
 ## Step 1: Classify the Task
 
+Analyze the user's request and classify it into a mode. **You MUST output a Decision Trace** (see Step 3) showing your reasoning.
+
 | Pattern | Mode | Tools Used |
 |---------|------|-----------|
 | "crawl", "ingest", "all pages from" | **Crawl** | Firecrawl `crawl` (unlimited) |
@@ -56,6 +58,27 @@ WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ─�
 
 **NEVER stop at a failed tool.**
 
+## Step 3: Decision Trace (REQUIRED)
+
+**You MUST output this trace** at the end of every /web response. This proves adaptive tool selection.
+
+Format:
+
+```
+---
+**Decision Trace**
+- Classification: [MODE] — because [1-sentence reason]
+- Tools considered: [list all tools that COULD have been used]
+- Tool sequence:
+  1. [Tool] → [result: success/failed/skipped] — [why]
+  ...
+- Adaptive decisions:
+  - [Any fallback triggered and why]
+  - [Any tool skipped and why]
+  - [Any tool chosen over another and why]
+- Cost: [N Firecrawl calls (unlimited), M WebFetch calls, etc.]
+```
+
 ## Output Rules
 
 - Lead with the answer, not the process
@@ -63,3 +86,4 @@ WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ─�
 - For research: include source URLs
 - For crawls: summarize structure first, then details
 - If output is very long: summarize, offer to save to file
+- **ALWAYS end with the Decision Trace block** (see Step 3)
