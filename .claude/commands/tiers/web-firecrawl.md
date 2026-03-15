@@ -7,6 +7,8 @@ The user provides: `$ARGUMENTS`
 
 ## Step 1: Classify the Task
 
+Analyze the user's request and classify it into a mode. **You MUST output a Decision Trace** (see Step 3) showing your reasoning.
+
 | Pattern | Mode | Tools Used |
 |---------|------|-----------|
 | "crawl", "ingest", "all pages from" | **Crawl** | Firecrawl `crawl` |
@@ -142,6 +144,34 @@ WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ─�
 **NEVER stop at a failed tool.** Always try the next one.
 **"Failed" = empty response, error, auth failure, script-only HTML, or tool not available.**
 
+## Step 3: Decision Trace (REQUIRED)
+
+**You MUST output this trace** at the end of every /web response. This proves adaptive tool selection.
+
+Format:
+
+```
+---
+**Decision Trace**
+- Classification: [MODE] — because [1-sentence reason matching the pattern table]
+- Tools considered: [list all tools that COULD have been used]
+- Tool sequence:
+  1. [Tool] → [result: success/failed/skipped] — [why]
+  2. [Tool] → [result: success/failed/skipped] — [why]
+  ...
+- Adaptive decisions:
+  - [Any fallback triggered and why]
+  - [Any tool skipped and why]
+  - [Any tool chosen over another and why]
+- Cost: [N Firecrawl credits used, M WebFetch calls, etc.]
+```
+
+### Decision trace rules:
+1. **Always start with cheapest tool** (WebFetch) unless you have evidence it will fail
+2. **Log every skip with a reason** — skipping a cheap tool must be justified
+3. **Log every fallback** — if WebFetch fails, say WHY before escalating
+4. **If you went straight to Firecrawl**, explain why
+
 ## Output Rules
 
 - Lead with the answer, not the process
@@ -150,3 +180,4 @@ WebFetch ──failed?──→ Firecrawl ──failed?──→ Playwright ─�
 - For crawls: summarize structure first, then details
 - Note Firecrawl credit usage: "X Firecrawl credits used"
 - If output is very long: summarize, then offer to show full content or save to file
+- **ALWAYS end with the Decision Trace block** (see Step 3)
